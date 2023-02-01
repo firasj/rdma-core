@@ -701,7 +701,17 @@ int ibv_query_qp_data_in_order(struct ibv_qp *qp, enum ibv_wr_opcode op,
 	 */
 	return 0;
 #else
-	return get_ops(qp->context)->query_qp_data_in_order(qp, op, flags);
+	uint32_t query_flags;
+	int result;
+
+	query_flags = flags ? flags : IBV_QUERY_QP_DATA_IN_ORDER_RETURN_CAPS;
+
+	result = get_ops(qp->context)->query_qp_data_in_order(qp, op, query_flags);
+	if (query_flags == IBV_QUERY_QP_DATA_IN_ORDER_RETURN_CAPS &&
+	    result & IBV_QUERY_QP_DATA_IN_ORDER_WHOLE_MSG)
+		result |= IBV_QUERY_QP_DATA_IN_ORDER_ALIGNED_128_BYTES;
+
+	return flags ? result : !!(result & IBV_QUERY_QP_DATA_IN_ORDER_WHOLE_MSG);
 #endif
 }
 
