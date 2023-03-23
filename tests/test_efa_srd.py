@@ -71,6 +71,27 @@ class QPSRDTestCase(EfaRDMATestCase):
         u.rdma_traffic(self.client, self.server, self.iters, self.gid_index, self.ib_port,
                        new_send=True, send_op=send_op)
 
+    def test_qp_ex_srd_rdma_write(self):
+        send_op = e.IBV_QP_EX_WITH_RDMA_WRITE
+        self.create_players(send_op)
+        self.client.rkey = self.server.mr.rkey
+        self.server.rkey = self.client.mr.rkey
+        self.client.raddr = self.server.mr.buf
+        self.server.raddr = self.client.mr.buf
+        u.rdma_traffic(self.client, self.server, self.iters, self.gid_index, self.ib_port,
+                       new_send=True, send_op=send_op)
+
+    def test_qp_ex_srd_rdma_write_with_imm(self):
+        send_op = e.IBV_QP_EX_WITH_RDMA_WRITE_WITH_IMM
+        self.create_players(send_op)
+        self.client.rkey = self.server.mr.rkey
+        self.server.rkey = self.client.mr.rkey
+        self.client.raddr = self.server.mr.buf
+        self.server.raddr = self.client.mr.buf
+        self.server.mr.write('s' * self.server.msg_size, self.server.msg_size)
+        u.traffic(self.client, self.server, self.iters, self.gid_index, self.ib_port,
+                  new_send=True, send_op=send_op)
+
     def test_qp_ex_srd_old_send(self):
         self.create_players()
         u.traffic(self.client, self.server, self.iters, self.gid_index, self.ib_port,

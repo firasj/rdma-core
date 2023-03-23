@@ -93,10 +93,12 @@ class SRDResources(TrafficResources):
             raise ex
 
     def create_mr(self):
+        access_flags = 0
         if self.send_ops_flags == e.IBV_QP_EX_WITH_RDMA_READ:
-            self.mr = tests.utils.create_custom_mr(self, e.IBV_ACCESS_REMOTE_READ)
-        else:
-            self.mr = tests.utils.create_custom_mr(self)
+            access_flags = e.IBV_ACCESS_REMOTE_READ
+        elif self.send_ops_flags in [e.IBV_QP_EX_WITH_RDMA_WRITE, e.IBV_QP_EX_WITH_RDMA_WRITE_WITH_IMM]:
+            access_flags = e.IBV_ACCESS_REMOTE_WRITE
+        self.mr = tests.utils.create_custom_mr(self, access_flags)
 
 
 class EfaCQRes(SRDResources):
