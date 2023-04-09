@@ -166,21 +166,29 @@ int efadv_query_device(struct ibv_context *ibvctx,
 	attr->inline_buf_size = ctx->inline_buf_size;
 
 	if (vext_field_avail(typeof(*attr), device_caps, inlen)) {
-		if (EFA_DEV_CAP(ctx, RNR_RETRY))
+		if (EFA_DEV_CAP(ctx, RNR_RETRY)) {
 			attr->device_caps |= EFADV_DEVICE_ATTR_CAPS_RNR_RETRY;
+			printf("Have EFADV_DEVICE_ATTR_CAPS_RNR_RETRY\n");
+		}
 
-		if (EFA_DEV_CAP(ctx, CQ_WITH_SGID))
+		if (EFA_DEV_CAP(ctx, CQ_WITH_SGID)) {
 			attr->device_caps |= EFADV_DEVICE_ATTR_CAPS_CQ_WITH_SGID;
+			printf("Have EFADV_DEVICE_ATTR_CAPS_CQ_WITH_SGID\n");
+		}
 	}
 
 	if (vext_field_avail(typeof(*attr), max_rdma_size, inlen)) {
 		attr->max_rdma_size = ctx->max_rdma_size;
 
-		if (EFA_DEV_CAP(ctx, RDMA_READ))
+		if (EFA_DEV_CAP(ctx, RDMA_READ)) {
 			attr->device_caps |= EFADV_DEVICE_ATTR_CAPS_RDMA_READ;
+			printf("Have EFADV_DEVICE_ATTR_CAPS_RDMA_READ\n");
+		}
 
-		if (EFA_DEV_CAP(ctx, RDMA_WRITE))
+		if (EFA_DEV_CAP(ctx, RDMA_WRITE)) {
 			attr->device_caps |= EFADV_DEVICE_ATTR_CAPS_RDMA_WRITE;
+			printf("Have EFADV_DEVICE_ATTR_CAPS_RDMA_WRITE\n");
+		}
 	}
 
 	attr->comp_mask = comp_mask_out;
@@ -1957,6 +1965,7 @@ static void efa_send_wr_rdma_read(struct ibv_qp_ex *ibvqpx, uint32_t rkey,
 static void efa_send_wr_rdma_write(struct ibv_qp_ex *ibvqpx, uint32_t rkey,
 				   uint64_t remote_addr)
 {
+	struct efa_qp *qp = to_efa_qp_ex(ibvqpx);
 	struct efa_io_tx_wqe *tx_wqe;
 
 	tx_wqe = efa_send_wr_common(ibvqpx, EFA_IO_RDMA_WRITE);
@@ -1964,11 +1973,13 @@ static void efa_send_wr_rdma_write(struct ibv_qp_ex *ibvqpx, uint32_t rkey,
 		return;
 
 	efa_send_wr_set_rdma_addr(tx_wqe, rkey, remote_addr);
+	verbs_info(verbs_get_ctx(qp->verbs_qp.qp.context), "Issued send w/o imm\n");
 }
 
 static void efa_send_wr_rdma_write_imm(struct ibv_qp_ex *ibvqpx, uint32_t rkey,
 				       uint64_t remote_addr, __be32 imm_data)
 {
+	struct efa_qp *qp = to_efa_qp_ex(ibvqpx);
 	struct efa_io_tx_wqe *tx_wqe;
 
 	tx_wqe = efa_send_wr_common(ibvqpx, EFA_IO_RDMA_WRITE);
@@ -1977,6 +1988,8 @@ static void efa_send_wr_rdma_write_imm(struct ibv_qp_ex *ibvqpx, uint32_t rkey,
 
 	efa_send_wr_set_rdma_addr(tx_wqe, rkey, remote_addr);
 	efa_send_wr_set_imm_data(tx_wqe, imm_data);
+
+	verbs_info(verbs_get_ctx(qp->verbs_qp.qp.context), "Issued send w/ imm\n");
 }
 
 static void efa_send_wr_set_sge(struct ibv_qp_ex *ibvqpx, uint32_t lkey,
